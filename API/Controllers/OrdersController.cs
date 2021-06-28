@@ -30,7 +30,7 @@ namespace API.Controllers
             foreach (var item in ordersData)
             {
                 orders.Add(mapObj.Translate(item));
-            }
+            } 
             return Json<List<OrderDomain>>(orders);
         }
 
@@ -65,33 +65,55 @@ namespace API.Controllers
                 }
                 filteredOrders.Add(filteredOrder);
 
-                
+            }
+            return Json<List<FilteredOrderDomain>>(filteredOrders);
+        }
 
+        // POST: api/Orders/PostFilteredOrders
+        [ResponseType(typeof(Order))]
+        public async Task<JsonResult<List<FilteredOrderDomain>>> PostFilteredOrders( FilterParams param )
+        {
 
+            var asinoes = param;
 
+            EntityMapper<Order, OrderDomain> mapObjOrder = new EntityMapper<Order, OrderDomain>();
+            EntityMapper<Customer, CustomerDomain> mapObjCustomer = new EntityMapper<Customer, CustomerDomain>();
+            EntityMapper<OrderDetail, OrderDetailDomain> mapObjOrderDetail = new EntityMapper<OrderDetail, OrderDetailDomain>();
 
+            List<Order> ordersData = db.Orders.ToList();
+            List<FilteredOrderDomain> filteredOrders = new List<FilteredOrderDomain>();
 
+            foreach (var order in ordersData)
+            {
+                FilteredOrderDomain filteredOrder = new FilteredOrderDomain();
+                filteredOrder.Active = order.Active;
+                filteredOrder.OrderID = order.OrderID;
+                filteredOrder.OrderDate = order.OrderDate;
 
+                Customer customerData = await db.Customers.FindAsync(order.CustomerID);
+                CustomerDomain customer = new CustomerDomain();
+                customer = mapObjCustomer.Translate(customerData);
+                filteredOrder.Customer = customer;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+                List<OrderDetail> orderDetailsData = db.OrderDetails.ToList().FindAll(x => x.OrderID == order.OrderID);
+                List<OrderDetailDomain> ordersDetail = new List<OrderDetailDomain>();
+                foreach (var item in orderDetailsData)
+                {
+                    ordersDetail.Add(mapObjOrderDetail.Translate(item));
+                    filteredOrder.OrdersDetail = ordersDetail;
+                }
+                filteredOrders.Add(filteredOrder);
 
 
 
             }
             return Json<List<FilteredOrderDomain>>(filteredOrders);
         }
+
+
+
+
+
 
         // GET: api/Orders/GetOrder/5
         [ResponseType(typeof(Order))]
