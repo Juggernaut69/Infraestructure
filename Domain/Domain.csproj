@@ -45,6 +45,7 @@
     <Compile Include="Class1.cs" />
     <Compile Include="CustomerDomain.cs" />
     <Compile Include="FilteredOrderDomain.cs" />
+    <Compile Include="FilterParams.cs" />
     <Compile Include="OrderDetailDomain.cs" />
     <Compile Include="OrderDomain.cs" />
     <Compile Include="ProductDomain.cs" />
