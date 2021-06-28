@@ -60,7 +60,6 @@ namespace API.Controllers
             return Json<List<SpecificOrderDomain>>(specificOrders);
         }
 
-
         // GET: api/OrderDetails/GetOrderDetail/5
         [ResponseType(typeof(OrderDetail))]
         public async Task<JsonResult<OrderDetailDomain>> GetOrderDetail(int id)

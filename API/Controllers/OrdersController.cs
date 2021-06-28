@@ -103,11 +103,11 @@ namespace API.Controllers
                     filteredOrder.OrdersDetail = ordersDetail;
                 }
                 filteredOrders.Add(filteredOrder);
-
-
-
             }
-            return Json<List<FilteredOrderDomain>>(filteredOrders);
+
+            List<FilteredOrderDomain> fltOrder = filteredOrders.Where(x => (x.OrderID == param.OrderID || param.OrderID == 0) && (x.Customer.CustomerID == param.ClientID || param.ClientID == 0) && (x.OrderDate > param.StartDate && x.OrderDate < param.EndDate || param.StartDate == null || param.EndDate == null ) ).ToList();
+
+            return Json<List<FilteredOrderDomain>>(fltOrder);
         }
 
 
