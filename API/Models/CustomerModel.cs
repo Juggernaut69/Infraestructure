@@ -1,19 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Web;
 using System.ComponentModel.DataAnnotations;
 
-namespace Domain
+namespace API.Models
 {
-    public class CustomerDomain
+    public class CustomerModel
     {
+
         [Key]
         public int CustomerID { get; set; }
         public string FullName { get; set; }
         public int DNI { get; set; }
 
     }
-
 }

@@ -43,14 +43,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
-    <Compile Include="CustomerDomain.cs" />
-    <Compile Include="FilteredOrderDomain.cs" />
-    <Compile Include="FilterParams.cs" />
-    <Compile Include="OrderDetailDomain.cs" />
-    <Compile Include="OrderDomain.cs" />
-    <Compile Include="ProductDomain.cs" />
+    <Compile Include="Customer.cs" />
+    <Compile Include="OrderDetail.cs" />
+    <Compile Include="Order.cs" />
+    <Compile Include="Product.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SpecificOrderDomain.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

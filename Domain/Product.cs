@@ -7,14 +7,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Domain
 {
-    public class OrderDetailDomain
+    public class Product
     {
-        [Key]
-        public int OrderDetailID { get; set; }
-        public int OrderID { get; set; }
         public int ProductID { get; set; }
-        public int Quantity { get; set; }
+        public string ProductName { get; set; }
         public double Price { get; set; }
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
 
     }
 }

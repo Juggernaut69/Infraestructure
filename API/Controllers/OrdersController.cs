@@ -14,50 +14,63 @@ using API;
 using API.Models;
 using API.Repository;
 using Domain;
+using Service;
+using API.Http;
 
 namespace API.Controllers
 {
     public class OrdersController : ApiController
     {
-        private OrderContext db = new OrderContext();
+        OrderDetailService ServiceOrderDetail;
+        ProductService ServiceProduct;
+        OrderService ServiceOrder;
+        CustomerService ServiceCustomer;
+
+        public OrdersController()
+        {
+            ServiceOrderDetail = new OrderDetailService();
+            ServiceProduct = new ProductService();
+            ServiceOrder = new OrderService();
+            ServiceCustomer = new CustomerService();
+        }
 
         // GET: api/Orders/GetOrders
-        public JsonResult<List<OrderDomain>> GetOrders()
+        public JsonResult<List<OrderModel>> GetOrders()
         {
-            EntityMapper<Order, OrderDomain> mapObj = new EntityMapper<Order, OrderDomain>();
-            List<Order> ordersData = db.Orders.ToList();
-            List<OrderDomain> orders = new List<OrderDomain>();
+            EntityMapper<Order, OrderModel> mapObj = new EntityMapper<Order, OrderModel>();
+            List<Order> ordersData = ServiceOrder.Get();
+            List<OrderModel> orders = new List<OrderModel>();
             foreach (var item in ordersData)
             {
                 orders.Add(mapObj.Translate(item));
-            } 
-            return Json<List<OrderDomain>>(orders);
+            }
+            return Json(orders);
         }
 
         // GET: api/Orders/GetFilteredOrders
-        public async Task<JsonResult<List<FilteredOrderDomain>>> GetFilteredOrders()
+        public JsonResult<List<FilteredOrderResponse>> GetFilteredOrders()
         {
-            EntityMapper<Order, OrderDomain> mapObjOrder = new EntityMapper<Order, OrderDomain>();
-            EntityMapper<Customer, CustomerDomain> mapObjCustomer = new EntityMapper<Customer, CustomerDomain>();
-            EntityMapper<OrderDetail, OrderDetailDomain> mapObjOrderDetail = new EntityMapper<OrderDetail, OrderDetailDomain>();
+            EntityMapper<Order, OrderModel> mapObjOrder = new EntityMapper<Order, OrderModel>();
+            EntityMapper<Customer, CustomerModel> mapObjCustomer = new EntityMapper<Customer, CustomerModel>();
+            EntityMapper<OrderDetail, OrderDetailModel> mapObjOrderDetail = new EntityMapper<OrderDetail, OrderDetailModel>();
 
-            List<Order> ordersData = db.Orders.ToList();
-            List<FilteredOrderDomain> filteredOrders = new List<FilteredOrderDomain>();
+            List<Order> ordersData = ServiceOrder.Get();
+            List<FilteredOrderResponse> filteredOrders = new List<FilteredOrderResponse>();
 
             foreach (var order in ordersData)
             {
-                FilteredOrderDomain filteredOrder = new FilteredOrderDomain();
+                FilteredOrderResponse filteredOrder = new FilteredOrderResponse();
                 filteredOrder.Active = order.Active;
                 filteredOrder.OrderID = order.OrderID;
                 filteredOrder.OrderDate = order.OrderDate;
 
-                Customer customerData = await db.Customers.FindAsync(order.CustomerID);
-                CustomerDomain customer = new CustomerDomain();
+                Customer customerData = ServiceCustomer.GetById(order.CustomerID);
+                CustomerModel customer = new CustomerModel();
                 customer = mapObjCustomer.Translate(customerData);
                 filteredOrder.Customer = customer;
 
-                List<OrderDetail> orderDetailsData = db.OrderDetails.ToList().FindAll(x => x.OrderID == order.OrderID);
-                List<OrderDetailDomain> ordersDetail = new List<OrderDetailDomain>();
+                List<OrderDetail> orderDetailsData = ServiceOrderDetail.Get().FindAll((x) => x.OrderID == order.OrderID);
+                List<OrderDetailModel> ordersDetail = new List<OrderDetailModel>();
                 foreach (var item in orderDetailsData)
                 {
                     ordersDetail.Add(mapObjOrderDetail.Translate(item));
@@ -66,35 +79,35 @@ namespace API.Controllers
                 filteredOrders.Add(filteredOrder);
 
             }
-            return Json<List<FilteredOrderDomain>>(filteredOrders);
+            return Json<List<FilteredOrderResponse>>(filteredOrders);
         }
 
         // POST: api/Orders/PostFilteredOrders
-        [ResponseType(typeof(Order))]
-        public async Task<JsonResult<List<FilteredOrderDomain>>> PostFilteredOrders( FilterParams param )
+        [ResponseType(typeof(OrderModel))]
+        public JsonResult<List<FilteredOrderResponse>> PostFilteredOrders(FilterParams param )
         {
 
-            EntityMapper<Order, OrderDomain> mapObjOrder = new EntityMapper<Order, OrderDomain>();
-            EntityMapper<Customer, CustomerDomain> mapObjCustomer = new EntityMapper<Customer, CustomerDomain>();
-            EntityMapper<OrderDetail, OrderDetailDomain> mapObjOrderDetail = new EntityMapper<OrderDetail, OrderDetailDomain>();
+            EntityMapper<Order, OrderModel> mapObjOrder = new EntityMapper<Order, OrderModel>();
+            EntityMapper<Customer, CustomerModel> mapObjCustomer = new EntityMapper<Customer, CustomerModel>();
+            EntityMapper<OrderDetail, OrderDetailModel> mapObjOrderDetail = new EntityMapper<OrderDetail, OrderDetailModel>();
 
-            List<Order> ordersData = db.Orders.ToList();
-            List<FilteredOrderDomain> filteredOrders = new List<FilteredOrderDomain>();
+            List<Order> ordersData = ServiceOrder.Get();
+            List<FilteredOrderResponse> filteredOrders = new List<FilteredOrderResponse>();
 
             foreach (var order in ordersData)
             {
-                FilteredOrderDomain filteredOrder = new FilteredOrderDomain();
+                FilteredOrderResponse filteredOrder = new FilteredOrderResponse();
                 filteredOrder.Active = order.Active;
                 filteredOrder.OrderID = order.OrderID;
                 filteredOrder.OrderDate = order.OrderDate;
 
-                Customer customerData = await db.Customers.FindAsync(order.CustomerID);
-                CustomerDomain customer = new CustomerDomain();
+                Customer customerData = ServiceCustomer.GetById(order.CustomerID);
+                CustomerModel customer = new CustomerModel();
                 customer = mapObjCustomer.Translate(customerData);
                 filteredOrder.Customer = customer;
 
-                List<OrderDetail> orderDetailsData = db.OrderDetails.ToList().FindAll(x => x.OrderID == order.OrderID);
-                List<OrderDetailDomain> ordersDetail = new List<OrderDetailDomain>();
+                List<OrderDetail> orderDetailsData = ServiceOrderDetail.Get().FindAll((x) => x.OrderID == order.OrderID);
+                List<OrderDetailModel> ordersDetail = new List<OrderDetailModel>();
                 foreach (var item in orderDetailsData)
                 {
                     ordersDetail.Add(mapObjOrderDetail.Translate(item));
@@ -102,26 +115,21 @@ namespace API.Controllers
                 }
                 filteredOrders.Add(filteredOrder);
             }
-            List<FilteredOrderDomain> fltOrder = (List<FilteredOrderDomain>)filteredOrders.FindAll(x => (x.OrderID == param.OrderID || param.OrderID == 0) && (x.Customer.CustomerID == param.ClientID || param.ClientID == 0));
-            return Json<List<FilteredOrderDomain>>(fltOrder);
+            List<FilteredOrderResponse> fltOrder = filteredOrders.Where(x => (x.OrderID == param.OrderID || param.OrderID == 0) && (x.Customer.CustomerID == param.ClientID || param.ClientID == 0) && (x.OrderDate > param.StartDate && x.OrderDate < param.EndDate || param.StartDate == null || param.EndDate == null)).ToList();
+            return Json<List<FilteredOrderResponse>>(fltOrder);
         }
 
-
-
-
-
-
         // GET: api/Orders/GetOrder/5
-        [ResponseType(typeof(Order))]
-        public async Task<JsonResult<OrderDomain>> GetOrder(int id)
+        [ResponseType(typeof(OrderModel))]
+        public JsonResult<OrderModel> GetOrder(int id)
         {
             try
             {
-                EntityMapper<Order, OrderDomain> mapObj = new EntityMapper<Order, OrderDomain>();
-                Order orderData = await db.Orders.FindAsync(id);
-                OrderDomain order = new OrderDomain();
+                EntityMapper<Order, OrderModel> mapObj = new EntityMapper<Order, OrderModel>();
+                Order orderData = ServiceOrder.GetById(id);
+                OrderModel order = new OrderModel();
                 order = mapObj.Translate(orderData);
-                return Json<OrderDomain>(order);
+                return Json(order);
             }
             catch (Exception)
             {
@@ -131,106 +139,58 @@ namespace API.Controllers
 
         // PUT: api/Orders/PutOrder/5
         [ResponseType(typeof(void))]
-        public async Task<IHttpActionResult> PutOrder(int id, OrderDomain orderData)
+        public IHttpActionResult PutOrder(int id, OrderModel orderData)
         {
 
-            EntityMapper<OrderDomain, Order> mapObj = new EntityMapper<OrderDomain, Order>();
+            EntityMapper<OrderModel, Order> mapObj = new EntityMapper<OrderModel, Order>();
             Order order = new Order();
             try
             {
                 order = mapObj.Translate(orderData);
+                ServiceOrder.Update(order, id);
             }
             catch (Exception)
             {
                 return null;
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != order.OrderID)
-            {
-                return BadRequest();
-            }
-
-            db.Entry(order).State = EntityState.Modified;
-
-            try
-            {
-                await db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!OrderExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
             }
 
             return StatusCode(HttpStatusCode.OK);
         }
 
         // POST: api/Orders/PostOrder
-        [ResponseType(typeof(Order))]
-        public async Task<IHttpActionResult> PostOrder(OrderDomain orderData)
+        [ResponseType(typeof(OrderModel))]
+        public IHttpActionResult PostOrder(OrderModel orderData)
         {
-            EntityMapper<OrderDomain, Order> mapObj = new EntityMapper<OrderDomain, Order>();
+            EntityMapper<OrderModel, Order> mapObj = new EntityMapper<OrderModel, Order>();
             Order order = new Order();
 
             try
             {
                 order = mapObj.Translate(orderData);
+                ServiceOrder.Insert(order);
             }
             catch (Exception)
             {
                 return null;
             }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            db.Orders.Add(order);
-            await db.SaveChangesAsync();
-
+      
             return CreatedAtRoute("DefaultApi", new { id = order.OrderID }, order);
         }
 
         // DELETE: api/Orders/5
-        [ResponseType(typeof(Order))]
+        [ResponseType(typeof(OrderModel))]
         public async Task<IHttpActionResult> DeleteOrder(int id)
         {
-            Order order = await db.Orders.FindAsync(id);
+            Order order = ServiceOrder.GetById(id);
             if (order == null)
             {
                 return NotFound();
             }
-
-            db.Orders.Remove(order);
-            await db.SaveChangesAsync();
+            order.Active = false;
+            ServiceOrder.Update(order, id);
 
             return Ok(order);
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-
-        private bool OrderExists(int id)
-        {
-            return db.Orders.Count(e => e.OrderID == id) > 0;
-        }
     }
 }

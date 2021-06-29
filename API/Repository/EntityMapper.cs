@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using API.Models;
 using AutoMapper;
 using Domain;
 
@@ -12,14 +13,14 @@ namespace API.Repository
 
         public EntityMapper()
         {
-            Mapper.CreateMap<Models.Customer, CustomerDomain>();
-            Mapper.CreateMap<CustomerDomain, Models.Customer>();
-            Mapper.CreateMap<Models.Product, ProductDomain>();
-            Mapper.CreateMap<ProductDomain, Models.Product>();
-            Mapper.CreateMap<Models.Order, OrderDomain>();
-            Mapper.CreateMap<OrderDomain, Models.Order>();
-            Mapper.CreateMap<Models.OrderDetail, OrderDetailDomain>();
-            Mapper.CreateMap<OrderDetailDomain, Models.OrderDetail>();
+            Mapper.CreateMap<CustomerModel, Customer>();
+            Mapper.CreateMap<Customer, CustomerModel>();
+            Mapper.CreateMap<ProductModel, Product>();
+            Mapper.CreateMap<Product, ProductModel>();
+            Mapper.CreateMap<OrderModel, Order>();
+            Mapper.CreateMap<Order, OrderModel>();
+            Mapper.CreateMap<OrderDetailModel, OrderDetail>();
+            Mapper.CreateMap<OrderDetail, OrderDetailModel>();
         }
 
         public TDestination Translate(TSource obj)

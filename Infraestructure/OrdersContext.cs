@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
+using System.Text;
+using System.Threading.Tasks;
 using System.Data.Entity;
-using API.Models;
 using Domain;
 
-namespace API
+namespace Infraestructure
 {
-    public class OrderContext : DbContext
-    {   
-        public OrderContext() : base("name = MyContextDB")
+    public class OrdersContext : DbContext
+    {
+        public OrdersContext() : base("name = MyContextDB")
         {
 
         }
@@ -21,5 +21,4 @@ namespace API
         public DbSet<Product> Products { get; set; }
 
     }
-
 }

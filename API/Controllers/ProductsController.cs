@@ -14,37 +14,45 @@ using API.Models;
 using System.Web.Http.Results;
 using API.Repository;
 using Domain;
+using Service;
+
 
 namespace API.Controllers
 {
     public class ProductsController : ApiController
     {
-        private OrderContext db = new OrderContext();
+
+        ProductService Service;
+
+        public ProductsController()
+        {
+            Service = new ProductService();
+        }
 
         // GET: api/Products/GetProducts
-        public JsonResult<List<ProductDomain>> GetProducts()
+        public JsonResult<List<ProductModel>> GetProducts()
         {
-            EntityMapper<Product, ProductDomain> mapObj = new EntityMapper<Product, ProductDomain>();
-            List<Product> productsData = db.Products.ToList();
-            List<ProductDomain> product = new List<ProductDomain>();
+            EntityMapper<Product, ProductModel> mapObj = new EntityMapper<Product, ProductModel>();
+            List<Product> productsData = Service.Get();
+            List<ProductModel> products = new List<ProductModel>();
             foreach (var item in productsData)
             {
-                product.Add(mapObj.Translate(item));
+                products.Add(mapObj.Translate(item));
             }
-            return Json<List<ProductDomain>>(product);
+            return Json(products);
         }
 
         // GET: api/Products/GetProduct/5
-        [ResponseType(typeof(Product))]
-        public async Task<JsonResult<ProductDomain>> GetProduct(int id)
+        [ResponseType(typeof(ProductModel))]
+        public JsonResult<ProductModel> GetProduct(int id)
         {
             try
             {
-                EntityMapper<Product, ProductDomain> mapObj = new EntityMapper<Product, ProductDomain>();
-                Product productData = await db.Products.FindAsync(id);
-                ProductDomain product = new ProductDomain();
+                EntityMapper<Product, ProductModel> mapObj = new EntityMapper<Product, ProductModel>();
+                Product productData = Service.GetById(id);
+                ProductModel product = new ProductModel();
                 product = mapObj.Translate(productData);
-                return Json<ProductDomain>(product);
+                return Json(product);
             }
             catch (Exception)
             {
@@ -54,105 +62,60 @@ namespace API.Controllers
 
         // PUT: api/Products/PutProduct/5
         [ResponseType(typeof(void))]
-        public async Task<IHttpActionResult> PutProduct(int id, ProductDomain productData)
+        public IHttpActionResult PutProduct(int id, ProductModel productData)
         {
-
-            EntityMapper<ProductDomain, Product> mapObj = new EntityMapper<ProductDomain, Product>();
+            EntityMapper<ProductModel, Product> mapObj = new EntityMapper<ProductModel, Product>();
             Product product = new Product();
             try
             {
                 product = mapObj.Translate(productData);
+                Service.Update(product, id);
             }
             catch (Exception)
             {
                 return null;
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != product.ProductID)
-            {
-                return BadRequest();
-            }
-
-            db.Entry(product).State = EntityState.Modified;
-
-            try
-            {
-                await db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProductExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
             }
 
             return StatusCode(HttpStatusCode.OK);
         }
 
         // POST: api/Products/PostProduct
-        [ResponseType(typeof(Product))]
-        public async Task<IHttpActionResult> PostProduct(ProductDomain productData)
+        [ResponseType(typeof(ProductModel))]
+        public IHttpActionResult PostProduct(ProductModel productData)
         {
-            EntityMapper<ProductDomain, Product> mapObj = new EntityMapper<ProductDomain, Product>();
+
+            EntityMapper<ProductModel, Product> mapObj = new EntityMapper<ProductModel, Product>();
             Product product = new Product();
+
             try
             {
                 product = mapObj.Translate(productData);
+                Service.Insert(product);
             }
             catch (Exception)
             {
                 return null;
             }
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            db.Products.Add(product);
-            await db.SaveChangesAsync();
-
             return CreatedAtRoute("DefaultApi", new { id = product.ProductID }, product);
         }
 
         // DELETE: api/Products/DeleteProduct/5
-        [ResponseType(typeof(Product))]
-        public async Task<IHttpActionResult> DeleteProduct(int id)
+        [ResponseType(typeof(ProductModel))]
+        public IHttpActionResult DeleteProduct(int id)
         {
-            Product product = await db.Products.FindAsync(id);
+            
+            Product product = Service.GetById(id);
+
             if (product == null)
             {
                 return NotFound();
             }
 
-            db.Products.Remove(product);
-            await db.SaveChangesAsync();
+            Service.Delete(id);
 
             return Ok(product);
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-
-        private bool ProductExists(int id)
-        {
-            return db.Products.Count(e => e.ProductID == id) > 0;
-        }
     }
 }
